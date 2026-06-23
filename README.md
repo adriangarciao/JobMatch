@@ -1,6 +1,6 @@
 # JobMatch
 
-[![CI](https://github.com/adriangarciao/AI-Job-Application-Assistant/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/adriangarciao/AI-Job-Application-Assistant/actions/workflows/maven.yml)
+[![CI](https://github.com/adriangarciao/JobMatch/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/adriangarciao/JobMatch/actions/workflows/maven.yml)
 
 A full-stack Spring Boot application that helps job seekers see how well their resume matches a job posting. It scores the match with a deterministic, weighted skill-matching engine and heuristic text parsing — no external LLM is called.
 

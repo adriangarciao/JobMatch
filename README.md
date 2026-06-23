@@ -1,42 +1,45 @@
-# AI Job Application Assistant
+# JobMatch
 
 [![CI](https://github.com/adriangarciao/AI-Job-Application-Assistant/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/adriangarciao/AI-Job-Application-Assistant/actions/workflows/maven.yml)
 
-A full-stack Spring Boot application that helps job seekers analyze how well their resume matches a job posting using a weighted skill-matching engine and intelligent text parsing.
+A full-stack Spring Boot application that helps job seekers see how well their resume matches a job posting. It scores the match with a deterministic, weighted skill-matching engine and heuristic text parsing — no external LLM is called.
 
 **Live demo:** https://adriangarciao-job-assistant.vercel.app
 
+## How the matching works
+
+There is no hosted LLM behind this project. The scoring is produced by a deterministic engine (`FakeLLMService`) that compares parsed skills and text overlap. It sits behind an `LLMService` interface, so a real model-backed implementation can be dropped in later without changing the controllers or frontend.
+
 ## Features
 
-- **Resume Management**: Upload and store resumes with skill extraction
-- **Job Application Tracking**: Track job applications with status management
-- **Skill Match Analysis**:
-  - Skill matching with required and nice-to-have skills
-  - Match scoring (0-100 scale)
-  - Strengths and weaknesses identification
+### In the web app (no sign-in required)
+- **Resume vs. job analysis** via `POST /api/ai/analyze`:
+  - Match score on a 0–100 scale (70% skill overlap, 30% text overlap)
+  - Strengths (matched core skills) and weaknesses (missing core skills)
   - Actionable suggestions for improvement
-- **Job Metadata Extraction**:
-  - Automatic location detection from job postings
-  - Compensation/salary information extraction
-- **Smart Skill Recognition**:
-  - Core technical skills detection
-  - Context-aware matching (e.g., "golang" vs "go")
-- **RESTful API**: Clean REST endpoints for all operations
-- **React Frontend**: Modern UI for analyzing resumes against job postings
+  - Optional cover-letter suggestions (a tailoring hint, not a generated letter)
+- **Resume import**: paste text, or import a `.txt`/`.md` file, or a PDF (parsed in-browser with `pdfjs-dist`, with a server-side fallback)
+- **Job metadata extraction**: best-effort location and compensation detection from the posting
+- **Smart skill recognition**: core technical skills with context-aware matching (e.g. `golang` is recognized, plain `go` is ignored as a common verb)
+
+### Backend API only (require authentication; not yet surfaced in the demo UI)
+- **Resume management**: upload, store, list, download, and delete resumes (server-side text extraction via Apache Tika / PDFBox / POI)
+- **Job application tracking**: create, update, list (paged), search/filter, and delete applications with status management
+- **Authentication**: JWT access tokens with rotating refresh tokens (HttpOnly cookie)
 
 ## Demo
 
-The repository includes demo screenshots showcasing the frontend and analysis results. Images are located under `frontend/public/images`.
+Screenshots of the frontend and analysis results live under `frontend/public/images`.
 
-- **Frontpage**: the front landing page.
+- **Frontpage**: the landing page.
 
   ![Frontpage](frontend/public/images/frontpage.png)
 
-- **Frontpage (Filled Out)**: the front page with all parameters filled in.
+- **Frontpage (Filled Out)**: the form with resume and job posting filled in.
 
   ![Frontpage Filled Out](frontend/public/images/frontpageFilledOut.png)
 
-- **Results (example 1)**: sample analysis results after running an analysis.
+- **Results (example 1)**: sample analysis output.
 
   ![Results 1](frontend/public/images/result1.png)
 
@@ -48,17 +51,17 @@ The repository includes demo screenshots showcasing the frontend and analysis re
 
 **Backend:**
 - Java 21
-- Spring Boot 3.5.6
-- Spring Data JPA
+- Spring Boot 3.5.6 (Web, Data JPA, Security, Validation)
 - PostgreSQL
 - Flyway (database migrations)
-- JWT authentication
-- MapStruct (object mapping)
+- JWT authentication (jjwt) with refresh-token rotation
+- MapStruct (object mapping) and Lombok
+- Apache Tika / PDFBox / POI (server-side resume text extraction)
 
 **Frontend:**
-- React 18
-- Vite
-- Modern CSS with gradients
+- React 19 + Vite
+- `pdfjs-dist` for in-browser PDF parsing
+- Modern CSS with design tokens
 
 ## Getting Started
 
@@ -66,8 +69,8 @@ The repository includes demo screenshots showcasing the frontend and analysis re
 
 - Java 21 or higher
 - PostgreSQL 17+ running locally on port 5432
-- Maven 3.9+ (or use included Maven wrapper)
-- Node.js 18+ (for frontend)
+- Maven 3.9+ (or use the included Maven wrapper)
+- Node.js 18+ (for the frontend)
 
 ### Database Setup
 
@@ -76,7 +79,7 @@ Create a PostgreSQL database:
 CREATE DATABASE jobassistant;
 ```
 
-Configure database connection in `src/main/resources/application.properties` if needed.
+The datasource reads `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, and `PGPASSWORD` (defaults: `localhost:5432/jobassistant`, user `postgres`). A `JWT_SECRET` environment variable is required to start the backend. See `src/main/resources/application.properties`.
 
 ### Running the Backend
 
@@ -89,7 +92,7 @@ Configure database connection in `src/main/resources/application.properties` if 
 ./mvnw spring-boot:run
 ```
 
-The backend will start on `http://localhost:8080`.
+The backend starts on `http://localhost:8080`.
 
 ### Running the Frontend
 
@@ -99,7 +102,7 @@ npm install
 npm run dev
 ```
 
-The frontend will start on `http://localhost:5173`.
+The frontend starts on `http://localhost:5173`. Set `VITE_API_URL` to point at the backend (e.g. `http://localhost:8080`).
 
 ### Running Tests
 
@@ -107,63 +110,75 @@ The frontend will start on `http://localhost:5173`.
 # Run all tests (Windows)
 .\mvnw.cmd test
 
-# Run specific test class (Windows)
+# Run a specific test class (Windows)
 .\mvnw.cmd test -Dtest=FakeLLMServiceTest
 
 # Run with coverage (Windows)
-.\mvnw.cmd clean test jacoco:report
+.\mvnw.cmd clean test
 ```
 ```bash
 # Run all tests (Mac/Linux)
 ./mvnw test
 
-# Run specific test class (Mac/Linux)
+# Run a specific test class (Mac/Linux)
 ./mvnw test -Dtest=FakeLLMServiceTest
 
 # Run with coverage (Mac/Linux)
-./mvnw clean test jacoco:report
+./mvnw clean test
 ```
 
-**Test Coverage**: 100 tests, 100% passing
+Tests use an in-memory H2 database. **Test suite: 85 tests** across unit and integration coverage, run on every push/PR via GitHub Actions. JaCoCo runs during the `test` phase; the coverage report is written to `target/site/jacoco/index.html`.
 
 ## API Endpoints
 
-### Analysis
-- `POST /api/ai/analyze` - Analyze resume against job posting
+### Analysis (public)
+- `POST /api/ai/analyze` — Analyze a resume against a job posting
 
-### Applications
-- `GET /api/applications` - List all applications
-- `POST /api/applications` - Create new application
-- `GET /api/applications/{id}` - Get application by ID
-- `PUT /api/applications/{id}` - Update application
-- `DELETE /api/applications/{id}` - Delete application
+### Authentication (public)
+- `POST /api/auth/register` — Register a new user
+- `POST /api/auth/login` — Log in
+- `POST /api/auth/refresh` — Rotate the refresh token and issue a new access token
+- `POST /api/auth/logout` — Revoke refresh tokens
+- `GET /api/auth/verify` — Introspect a bearer token
 
-### Resumes
-- `GET /api/resumes` - List all resumes
-- `POST /api/resumes` - Upload new resume
-- `GET /api/resumes/{id}` - Get resume by ID
-- `DELETE /api/resumes/{id}` - Delete resume
+### Resumes (authenticated)
+- `POST /api/resumes` — Upload and store a resume (multipart)
+- `POST /api/resumes/parse` — Extract text from an uploaded PDF/DOCX without storing it
+- `GET /api/resumes` — List the current user's resumes
+- `GET /api/resumes/{id}` — Get a resume by ID
+- `GET /api/resumes/{id}/download` — Download a stored resume
+- `DELETE /api/resumes/{id}` — Delete a resume
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login
-- `POST /api/auth/refresh` - Refresh access token
+### Applications (authenticated)
+- `POST /api/applications` — Create an application
+- `GET /api/applications/{id}` — Get an application by ID
+- `GET /api/applications/me/paged` — List the current user's applications (paged)
+- `GET /api/applications/me/search` — Search/filter the current user's applications
+- `PUT /api/applications/{id}` — Replace an application
+- `PATCH /api/applications/{id}` — Partially update an application
+- `DELETE /api/applications/{id}` — Delete an application
+
+### Users (authenticated)
+- `GET /api/me`, `GET /api/users/me`, `PUT/PATCH /api/users/me`, `PUT /api/users/me/password`, plus admin-scoped user management under `/api/users`
 
 ## Architecture
 
 ```
 ai-job-app-assistant/
 ├── src/main/java/adriangarciao/ai_job_app_assistant/
-│   ├── config/           # Security, CORS configuration
+│   ├── config/           # Security, CORS, AI bean wiring, uploads
 │   ├── controller/       # REST controllers
-│   ├── dto/              # Data transfer objects
-│   ├── entity/           # JPA entities
+│   ├── dto/              # Data transfer objects (records)
+│   ├── exception/        # Custom exceptions + global handler
+│   ├── JWTUtility/       # JWT auth filter
 │   ├── mapper/           # MapStruct mappers
+│   ├── model/            # JPA entities
 │   ├── repository/       # Spring Data repositories
-│   ├── security/         # JWT, authentication
-│   └── service/          # Business logic
-│       └── ai/           # Analysis services
-│           └── llm/      # Scoring abstraction layer
+│   ├── security/         # Authentication principal / authorization
+│   ├── service/          # Business logic
+│   │   └── ai/           # Parsing + analysis services
+│   │       └── llm/      # LLMService abstraction + deterministic impl
+│   └── specifications/   # JPA Specifications for application search
 ├── src/main/resources/
 │   └── db/migration/     # Flyway SQL migrations
 ├── src/test/             # Unit and integration tests
@@ -174,16 +189,16 @@ ai-job-app-assistant/
 
 The scoring engine uses a deterministic weighted algorithm to compare a resume against a job posting:
 
-- **70% weight**: Skill overlap (required + nice-to-have)
-- **30% weight**: Text content overlap
+- **70% weight**: Core-skill overlap (extracted from required + nice-to-have skills)
+- **30% weight**: General text-token overlap (capped at 60)
 - **Smart parsing**: Extracts skills, location, and compensation from job postings
-- **Context-aware**: Understands technical terminology vs common words
+- **Context-aware**: Distinguishes technical terminology from common words
 
-### Skill Matching Algorithm
+### Algorithm
 
-1. Extracts skills from resume and job posting
-2. Identifies core technical skills (Java, Python, React, etc.)
-3. Calculates match percentage for required and nice-to-have skills
+1. Parses skills from the resume and the job posting
+2. Reduces both to a set of core technical skills (Java, Python, React, etc.)
+3. Computes the matched / missing core skills and a weighted match score
 4. Generates strengths, weaknesses, and suggestions
 5. Extracts job metadata (location, compensation)
 

@@ -59,9 +59,9 @@ export default function FormCard({
       const fd = new FormData()
       fd.append('file', file)
 
-      const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE)
-        ? import.meta.env.VITE_API_BASE
-        : 'http://localhost:8081'
+      const base = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
+        ? import.meta.env.VITE_API_URL
+        : 'http://localhost:8080'
 
       const token = window.localStorage.getItem('token')
         || window.localStorage.getItem('authToken')

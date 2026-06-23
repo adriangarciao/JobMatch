@@ -79,7 +79,7 @@ function App() {
   return (
     <div className="app-container">
       <div className="content">
-        <Header title="AI Job Application Assistant." subtitle="Get AI-powered feedback on how well your resume matches a job posting." />
+        <Header title="JobMatch." subtitle="See how well your resume matches a job posting." />
 
         <FormCard
           resumeText={resumeText}

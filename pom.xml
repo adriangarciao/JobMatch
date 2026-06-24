@@ -8,11 +8,11 @@
 		<version>3.5.6</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>adriangarciao</groupId>
-	<artifactId>ai-job-app-assistant</artifactId>
+	<groupId>com.adriangarciao</groupId>
+	<artifactId>jobmatch</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ai-job-app-assistant</name>
-	<description>ai job application assitant</description>
+	<name>jobmatch</name>
+	<description>JobMatch - resume vs. job posting match scoring</description>
 	<url/>
 	<licenses>
 		<license/>

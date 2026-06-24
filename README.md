@@ -164,8 +164,8 @@ Tests use an in-memory H2 database. **Test suite: 85 tests** across unit and int
 ## Architecture
 
 ```
-ai-job-app-assistant/
-├── src/main/java/adriangarciao/ai_job_app_assistant/
+jobmatch/
+├── src/main/java/com/adriangarciao/jobmatch/
 │   ├── config/           # Security, CORS, AI bean wiring, uploads
 │   ├── controller/       # REST controllers
 │   ├── dto/              # Data transfer objects (records)

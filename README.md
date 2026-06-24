@@ -4,7 +4,7 @@
 
 A full-stack Spring Boot application that helps job seekers see how well their resume matches a job posting. It scores the match with a deterministic, weighted skill-matching engine and heuristic text parsing — no external LLM is called.
 
-**Live demo:** https://adriangarciao-job-assistant.vercel.app
+**Live demo:** https://adriangarciao-jobmatch.vercel.app
 
 ## How the matching works
 

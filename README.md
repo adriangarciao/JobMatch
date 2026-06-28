@@ -204,7 +204,7 @@ The scoring engine uses a deterministic weighted algorithm to compare a resume a
 
 ## License
 
-This project is for educational purposes.
+Released under the [MIT License](LICENSE).
 
 ## Contact
 

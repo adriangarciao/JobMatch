@@ -83,7 +83,7 @@ export default function FormCard({
         }
         const json = await res.json()
         setResumeText(json.rawText || '')
-      }).catch((err) => {
+      }).catch(() => {
         setImportError('Failed to upload for parsing')
       })
       return

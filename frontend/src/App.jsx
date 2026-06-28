@@ -57,7 +57,7 @@ function App() {
 
       const data = await response.json()
       setResult(data)
-    } catch (err) {
+    } catch {
       setError('Something went wrong. Please try again later.')
     } finally {
       setLoading(false)

@@ -163,26 +163,30 @@ Tests use an in-memory H2 database. **Test suite: 85 tests** across unit and int
 
 ## Architecture
 
-```
-jobmatch/
-├── src/main/java/com/adriangarciao/jobmatch/
-│   ├── config/           # Security, CORS, AI bean wiring, uploads
-│   ├── controller/       # REST controllers
-│   ├── dto/              # Data transfer objects (records)
-│   ├── exception/        # Custom exceptions + global handler
-│   ├── JWTUtility/       # JWT auth filter
-│   ├── mapper/           # MapStruct mappers
-│   ├── model/            # JPA entities
-│   ├── repository/       # Spring Data repositories
-│   ├── security/         # Authentication principal / authorization
-│   ├── service/          # Business logic
-│   │   └── ai/           # Parsing + analysis services
-│   │       └── llm/      # LLMService abstraction + deterministic impl
-│   └── specifications/   # JPA Specifications for application search
-├── src/main/resources/
-│   └── db/migration/     # Flyway SQL migrations
-├── src/test/             # Unit and integration tests
-└── frontend/             # React frontend application
+```mermaid
+flowchart TD
+    UI["React + Vite frontend"]
+
+    subgraph Backend["Spring Boot backend"]
+        Filter["JWTUtility<br/>JWT auth filter"]
+        Controllers["controller<br/>REST controllers"]
+        Mappers["dto + mapper<br/>records / MapStruct"]
+        Services["service<br/>business logic"]
+        AI["service.ai<br/>parsing + analysis"]
+        LLM["service.ai.llm<br/>LLMService + FakeLLMService"]
+        Repos["repository<br/>Spring Data + specifications"]
+
+        Filter --> Controllers
+        Controllers --> Mappers
+        Controllers --> Services
+        Services --> AI
+        AI --> LLM
+        Services --> Repos
+    end
+
+    UI -- "REST / JSON" --> Filter
+    Repos -- "JPA" --> DB[("PostgreSQL")]
+    Flyway["db/migration<br/>Flyway migrations"] --> DB
 ```
 
 ## Skill Matching Engine

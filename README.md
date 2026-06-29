@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/adriangarciao/JobMatch/actions/workflows/maven.yml/badge.svg?branch=main)](https://github.com/adriangarciao/JobMatch/actions/workflows/maven.yml)
 
-A full-stack Spring Boot + React app that scores how well a resume matches a job posting. Scoring is deterministic — a weighted skill- and text-overlap engine, no external LLM — so results are instant, reproducible, and free to run.
+A full-stack Spring Boot + React app that scores how well a resume matches a job posting. Scoring is deterministic: a weighted skill- and text-overlap engine with no external LLM, so results are instant, reproducible, and free to run.
 
 **Live demo:** https://adriangarciao-jobmatch.vercel.app
 
@@ -60,11 +60,11 @@ flowchart TD
 
 ## Engineering Decisions
 
-- **Scoring sits behind an `LLMService` interface.** The matcher (`FakeLLMService`) computes scores from weighted overlap rather than calling a model — predictable, instant, free, and fully unit-testable. A model-backed implementation can replace it without touching controllers or the frontend.
-- **JWT access tokens + rotating refresh tokens.** Access tokens are short-lived to limit exposure; refresh tokens rotate on use and live in an HttpOnly cookie to keep them out of JavaScript.
-- **PDF parsing in the browser, with a server fallback.** `pdfjs-dist` extracts resume text client-side to keep requests light; the backend (Tika/PDFBox/POI) covers formats the browser can't handle.
+- **Scoring sits behind an `LLMService` interface.** The matcher (`FakeLLMService`) computes scores from weighted overlap rather than calling a model, which keeps it predictable, instant, free, and fully unit-testable. A model-backed implementation can replace it without touching controllers or the frontend.
+- **JWT access tokens with rotating refresh tokens.** Access tokens are short-lived to limit exposure; refresh tokens rotate on use and live in an HttpOnly cookie to keep them out of JavaScript.
+- **PDF parsing in the browser, with a server fallback.** `pdfjs-dist` extracts resume text client-side to keep requests light, and the backend (Tika/PDFBox/POI) covers formats the browser can't handle.
 - **Flyway-managed schema.** Versioned SQL migrations keep the database reproducible instead of relying on Hibernate auto-DDL.
-- **DTOs + MapStruct instead of exposing entities.** Records define the API contract and MapStruct maps them at compile time, decoupling the wire format from JPA entities.
+- **DTOs and MapStruct instead of exposing entities.** Records define the API contract and MapStruct maps them at compile time, decoupling the wire format from JPA entities.
 
 ## How matching works
 
@@ -79,38 +79,38 @@ From that it derives the match score, matched/missing skills, and suggestions, p
 
 **Prerequisites:** Java 21 · PostgreSQL 17+ on port 5432 · Node.js 18+ · Maven 3.9+ (or the included wrapper)
 
-**1. Database** — create the schema (the backend runs Flyway migrations on startup):
+**1. Database.** Create the schema (the backend runs Flyway migrations on startup):
 ```sql
 CREATE DATABASE jobassistant;
 ```
-The datasource reads `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` (defaults `localhost:5432/jobassistant`, user `postgres`). A `JWT_SECRET` is required to start the backend — see `src/main/resources/application.properties`.
+The datasource reads `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` (defaults `localhost:5432/jobassistant`, user `postgres`). A `JWT_SECRET` is required to start the backend. See `src/main/resources/application.properties`.
 
-**2. Backend** — starts on `http://localhost:8080`:
+**2. Backend.** Starts on `http://localhost:8080`:
 ```bash
 ./mvnw spring-boot:run        # Windows: .\mvnw.cmd spring-boot:run
 ```
 
-**3. Frontend** — starts on `http://localhost:5173`; set `VITE_API_URL` to the backend URL:
+**3. Frontend.** Starts on `http://localhost:5173`; set `VITE_API_URL` to the backend URL:
 ```bash
 cd frontend && npm install && npm run dev
 ```
 
-**Tests** — 85 unit + integration tests against in-memory H2, run on every push/PR via GitHub Actions. JaCoCo writes coverage to `target/site/jacoco/index.html`:
+**Tests.** 85 unit + integration tests against in-memory H2, run on every push/PR via GitHub Actions. JaCoCo writes coverage to `target/site/jacoco/index.html`:
 ```bash
 ./mvnw clean test             # Windows: .\mvnw.cmd clean test
 ```
 
 ## API Reference
 
-**Analysis (public)** — `POST /api/ai/analyze`
+**Analysis (public):** `POST /api/ai/analyze`
 
-**Auth (public)** — `POST /api/auth/{register,login,refresh,logout}` · `GET /api/auth/verify`
+**Auth (public):** `POST /api/auth/{register,login,refresh,logout}` · `GET /api/auth/verify`
 
-**Resumes (auth)** — `POST /api/resumes` (multipart) · `POST /api/resumes/parse` · `GET /api/resumes` · `GET /api/resumes/{id}` · `GET /api/resumes/{id}/download` · `DELETE /api/resumes/{id}`
+**Resumes (auth):** `POST /api/resumes` (multipart) · `POST /api/resumes/parse` · `GET /api/resumes` · `GET /api/resumes/{id}` · `GET /api/resumes/{id}/download` · `DELETE /api/resumes/{id}`
 
-**Applications (auth)** — `POST /api/applications` · `GET /api/applications/{id}` · `GET /api/applications/me/paged` · `GET /api/applications/me/search` · `PUT|PATCH /api/applications/{id}` · `DELETE /api/applications/{id}`
+**Applications (auth):** `POST /api/applications` · `GET /api/applications/{id}` · `GET /api/applications/me/paged` · `GET /api/applications/me/search` · `PUT|PATCH /api/applications/{id}` · `DELETE /api/applications/{id}`
 
-**Users (auth)** — `GET /api/me` · `GET|PUT|PATCH /api/users/me` · `PUT /api/users/me/password` · admin user management under `/api/users`
+**Users (auth):** `GET /api/me` · `GET|PUT|PATCH /api/users/me` · `PUT /api/users/me/password` · admin user management under `/api/users`
 
 ## License
 
@@ -118,4 +118,4 @@ Released under the [MIT License](LICENSE).
 
 ## Contact
 
-Adrian Garcia — [@adriangarciao](https://github.com/adriangarciao)
+Adrian Garcia ([@adriangarciao](https://github.com/adriangarciao))

@@ -7,6 +7,9 @@ import com.adriangarciao.jobmatch.model.ApplicationStatus;
 import com.adriangarciao.jobmatch.model.User;
 import com.adriangarciao.jobmatch.repository.UserRepository;
 import com.adriangarciao.jobmatch.service.ApplicationService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/applications")
+@Tag(name = "Applications")
+@SecurityRequirement(name = "bearerAuth")
 public class ApplicationController {
 
     private static final Logger log = LoggerFactory.getLogger(ApplicationController.class);
@@ -60,6 +65,7 @@ public class ApplicationController {
 
     // ---------- create (mine) ----------
     @PostMapping
+    @Operation(summary = "Create an application for the current user")
     public ResponseEntity<ApplicationDTO> createMyApplication(@Valid @RequestBody ApplicationCreateDTO dto,
                                                               Authentication auth) {
         log.info("Create application endpoint called for user: {}", auth.getName());
@@ -70,6 +76,7 @@ public class ApplicationController {
 
     // ---------- get one (mine) ----------
     @GetMapping("/{id}")
+    @Operation(summary = "Get one of the current user's applications by id")
     public ResponseEntity<ApplicationDTO> getMyApplication(@PathVariable Long id, Authentication auth) {
         Long userId = currentUserId(auth);
         ApplicationDTO app = applicationService.getOwned(id, userId);
@@ -78,6 +85,7 @@ public class ApplicationController {
 
     // ---------- list mine (paged) ----------
     @GetMapping("/me/paged")
+    @Operation(summary = "List the current user's applications (paged)")
     public ResponseEntity<Page<ApplicationDTO>> getMyApplicationsPaged(
             Authentication auth,
             @RequestParam(defaultValue = "0") int page,
@@ -93,6 +101,7 @@ public class ApplicationController {
 
     // ---------- search mine (filters) ----------
     @GetMapping("/me/search")
+    @Operation(summary = "Search and filter the current user's applications")
     public ResponseEntity<PagedResponse<ApplicationDTO>> searchMyApplications(
             Authentication auth,
             @RequestParam(defaultValue = "0") int page,
@@ -128,6 +137,7 @@ public class ApplicationController {
 
     // ---------- update (mine) ----------
     @PutMapping("/{id}")
+    @Operation(summary = "Replace one of the current user's applications")
     public ResponseEntity<ApplicationDTO> updateMyApplication(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationDTO dto,
@@ -139,6 +149,7 @@ public class ApplicationController {
     }
 
     @PatchMapping("/{id}")
+    @Operation(summary = "Partially update one of the current user's applications")
     public ResponseEntity<ApplicationDTO> patchMyApplication(
             @PathVariable Long id,
             @RequestBody Map<String, Object> patch, // or a specific Patch DTO if you prefer
@@ -151,6 +162,7 @@ public class ApplicationController {
 
     // ---------- delete (mine) ----------
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete one of the current user's applications")
     public ResponseEntity<Void> deleteMyApplication(@PathVariable Long id, Authentication auth) {
         Long userId = currentUserId(auth);
         applicationService.deleteOwned(id, userId);
@@ -159,6 +171,7 @@ public class ApplicationController {
 
     // ---------- OPTIONAL: admin-only queries by user ----------
     @GetMapping("/admin/user/{userId}/paged")
+    @Operation(summary = "List a given user's applications, paged (admin only)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<ApplicationDTO>> adminGetByUserPaged(
             @PathVariable Long userId,

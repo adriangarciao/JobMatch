@@ -6,6 +6,8 @@ A full-stack Spring Boot + React app that scores how well a resume matches a job
 
 **Live demo:** https://adriangarciao-jobmatch.vercel.app
 
+**Interactive API docs (Swagger UI):** https://job-match.up.railway.app/swagger-ui.html. Browse every endpoint, then run the full register, login, Authorize, and call-a-protected-route flow right in the browser.
+
 ![Frontpage filled out](frontend/public/images/frontpageFilledOut.png)
 ![Analysis result](frontend/public/images/result1.png)
 
@@ -85,7 +87,7 @@ CREATE DATABASE jobassistant;
 ```
 The datasource reads `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD` (defaults `localhost:5432/jobassistant`, user `postgres`). A `JWT_SECRET` is required to start the backend. See `src/main/resources/application.properties`.
 
-**2. Backend.** Starts on `http://localhost:8080`:
+**2. Backend.** Starts on `http://localhost:8080`; Swagger UI is then at `http://localhost:8080/swagger-ui.html`:
 ```bash
 ./mvnw spring-boot:run        # Windows: .\mvnw.cmd spring-boot:run
 ```
@@ -101,6 +103,8 @@ cd frontend && npm install && npm run dev
 ```
 
 ## API Reference
+
+The interactive [Swagger UI](https://job-match.up.railway.app/swagger-ui.html) is the source of truth (schemas are generated from the DTOs and Jakarta validation). Summary:
 
 **Analysis (public):** `POST /api/ai/analyze`
 

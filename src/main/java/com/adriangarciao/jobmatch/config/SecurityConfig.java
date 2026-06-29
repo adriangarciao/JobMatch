@@ -35,9 +35,16 @@ public class SecurityConfig {
 
                 // What's allowed without a token
                 .authorizeHttpRequests(auth -> auth
+                        // OpenAPI JSON/YAML + Swagger UI (springdoc defaults). Only the docs
+                        // are opened up; protected endpoints below still require a valid JWT.
+                        .requestMatchers(
+                                "/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml",
+                                "/swagger-ui.html", "/swagger-ui/**"
+                        ).permitAll()
+
                         // simplest: open all auth endpoints
                         .requestMatchers("/api/auth/**").permitAll()
-                        
+
                         // Allow AI analysis endpoint without auth for demo
                         .requestMatchers("/api/ai/**").permitAll()
 

@@ -12,6 +12,10 @@ import com.adriangarciao.jobmatch.service.JwtService;
 import com.adriangarciao.jobmatch.service.RefreshTokenService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
@@ -33,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Auth")
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
@@ -65,6 +70,12 @@ public class AuthController {
 
     // ---------- REGISTER ----------
     @PostMapping("/register")
+    @Operation(summary = "Register a new user and return an access token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "User created; access token returned"),
+            @ApiResponse(responseCode = "400", description = "Validation error in the request body"),
+            @ApiResponse(responseCode = "409", description = "Email already in use")
+    })
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest req,
                                                  HttpServletResponse res) {
         log.info("Register endpoint called for email: {}", req.email());
@@ -91,6 +102,11 @@ public class AuthController {
 
     // ---------- LOGIN ----------
     @PostMapping("/login")
+    @Operation(summary = "Log in and return an access token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Authenticated; access token returned"),
+            @ApiResponse(responseCode = "401", description = "Invalid credentials")
+    })
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest req,
                                               HttpServletResponse res) {
         User u = userRepository.findByEmail(req.email())
@@ -108,6 +124,11 @@ public class AuthController {
     // ---------- REFRESH (rotate) ----------
     // Will accept the HttpOnly cookie automatically. For manual testing you can also post { "refreshToken": "..." }
     @PostMapping("/refresh")
+    @Operation(summary = "Rotate the refresh token and issue a new access token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "New access token issued"),
+            @ApiResponse(responseCode = "401", description = "Missing, invalid, expired, or revoked refresh token")
+    })
     public ResponseEntity<AuthResponse> refresh(
             @CookieValue(name = "refresh_token", required = false) String cookie,
             @RequestBody(required = false) Map<String, String> body,
@@ -136,6 +157,7 @@ public class AuthController {
 
     // ---------- LOGOUT ----------
     @PostMapping("/logout")
+    @Operation(summary = "Revoke the current user's refresh tokens and clear the cookie")
     public ResponseEntity<Void> logout(@AuthenticationPrincipal(expression = "username") String email,
                                        HttpServletResponse res) {
         Optional<User> user = userRepository.findByEmail(email);
@@ -148,6 +170,11 @@ public class AuthController {
 
     // ---------- VERIFY (kept as you had it) ----------
     @GetMapping("/verify")
+    @Operation(summary = "Introspect a bearer token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Token is valid; claims returned"),
+            @ApiResponse(responseCode = "401", description = "Missing, invalid, or expired token")
+    })
     public ResponseEntity<TokenIntrospectionResponse> verify(
             @RequestHeader(name = "Authorization", required = false) String auth) {
         if (auth == null || !auth.startsWith("Bearer ")) {

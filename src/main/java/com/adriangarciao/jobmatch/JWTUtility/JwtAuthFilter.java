@@ -29,6 +29,15 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         this.jwtService = jwtService;
     }
 
+    /** Never attempt token validation on the public API docs (OpenAPI JSON/YAML + Swagger UI). */
+    @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest req) {
+        String uri = req.getRequestURI();
+        return uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-ui")
+                || uri.equals("/swagger-ui.html");
+    }
+
         @Override
         protected void doFilterInternal(@NonNull HttpServletRequest req, @NonNull HttpServletResponse res, @NonNull FilterChain chain)
             throws ServletException, IOException {

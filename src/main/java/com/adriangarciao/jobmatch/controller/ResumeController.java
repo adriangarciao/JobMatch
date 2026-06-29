@@ -5,6 +5,9 @@ import com.adriangarciao.jobmatch.dto.ResumeUploadResponse;
 import com.adriangarciao.jobmatch.service.ResumeService;
 import com.adriangarciao.jobmatch.service.ai.ParserService;
 import com.adriangarciao.jobmatch.dto.ResumeParseResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -28,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/resumes")
+@Tag(name = "Resumes")
+@SecurityRequirement(name = "bearerAuth")
 public class ResumeController {
 
     private static final Logger log = LoggerFactory.getLogger(ResumeController.class);
@@ -45,6 +50,7 @@ public class ResumeController {
      * No userId in the request body/query anymore.
      */
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload and store a resume for the current user")
     public ResponseEntity<ResumeDTO> upload(
             @RequestPart("file") @NotNull MultipartFile file,
             Authentication auth
@@ -64,6 +70,7 @@ public class ResumeController {
      * Endpoint expects authenticated user (Authentication available) but does not store the file.
      */
     @PostMapping(path = "/parse", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Extract text from an uploaded PDF/DOCX without storing it")
     public ResponseEntity<ResumeParseResponse> parseFile(
             @RequestPart("file") @NotNull MultipartFile file,
             Authentication auth
@@ -98,6 +105,7 @@ public class ResumeController {
      * Get a single resume by id (owner or admin).
      */
     @GetMapping("/{id}")
+    @Operation(summary = "Get a resume by id (owner or admin)")
     @PreAuthorize("@authzService.ownsResume(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<ResumeDTO> get(@PathVariable Long id) {
         return ResponseEntity.ok(resumeService.get(id));
@@ -107,6 +115,7 @@ public class ResumeController {
      * List *my* resumes (authenticated user).
      */
     @GetMapping
+    @Operation(summary = "List the current user's resumes")
     public ResponseEntity<List<ResumeDTO>> listMine(Authentication auth) {
         String email = auth.getName();
         return ResponseEntity.ok(resumeService.listByEmail(email));
@@ -116,6 +125,7 @@ public class ResumeController {
      * OPTIONAL: Admin-only—list resumes for a given userId.
      */
     @GetMapping("/user/{userId}")
+    @Operation(summary = "List resumes for a given user (admin only)")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ResumeDTO>> listByUser(@PathVariable Long userId) {
         return ResponseEntity.ok(resumeService.listByUserId(userId));
@@ -125,6 +135,7 @@ public class ResumeController {
      * Download (owner or admin).
      */
     @GetMapping("/{id}/download")
+    @Operation(summary = "Download a stored resume (owner or admin)")
     @PreAuthorize("@authzService.ownsResume(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Resource> download(@PathVariable Long id) {
         return resumeService.download(id);
@@ -134,6 +145,7 @@ public class ResumeController {
      * Delete (owner or admin).
      */
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a resume (owner or admin)")
     @PreAuthorize("@authzService.ownsResume(authentication, #id) or hasRole('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         resumeService.delete(id);
